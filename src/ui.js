@@ -173,7 +173,6 @@ export function bindControls(root, handlers) {
     event.preventDefault()
     handlers.load(root.querySelector('#rescue-id').value)
   })
-  root.querySelector('#rescue-id').addEventListener('input', handlers.customize)
   root.querySelectorAll('[data-setting]').forEach((input) => {
     input.addEventListener('input', () => handlers.change(input.dataset.setting, input.type === 'checkbox' ? input.checked : input.value))
   })

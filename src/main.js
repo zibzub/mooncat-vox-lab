@@ -28,10 +28,9 @@ function patchSetting(path, rawValue) {
   updateState(next)
 }
 
-async function loadSelected(id, { showMissing = true, manual = false } = {}) {
+async function loadSelected(id, { showMissing = true } = {}) {
   const cleanedId = String(id).trim().replace(/[^a-zA-Z0-9_-]/g, '')
   state.id = cleanedId || state.id
-  if (manual) state.preset = 'custom'
   loadedAsset = null
   setPoseOptions(root, [], state.pose)
   persistState(state)
@@ -69,7 +68,7 @@ viewer = createViewer(root.querySelector('#viewer'), (message, kind) => setLoadS
 syncControls(root, state)
 viewer.applyState(state)
 bindControls(root, {
-  load: (id) => loadSelected(id, { manual: true }),
+  load: (id) => loadSelected(id),
   change: patchSetting,
   mode: (mode) => updateState({
     ...state,
