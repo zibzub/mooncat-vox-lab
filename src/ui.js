@@ -63,6 +63,7 @@ export function renderShell(root) {
           ${range('ramp.shadow', 'Shadow', 0, 255, 1, 75)}
           ${range('ramp.midtone', 'Midtone', 0, 255, 1, 190)}
           ${range('ramp.highlight', 'Highlight', 0, 255, 1, 255)}
+          ${range('shadowColorRetention', 'Shadow color retention', 0, 1, 0.01, 0)}
           <label class="color-control" for="background"><span>Background</span><input id="background" data-setting="background" type="color" value="#202226"></label>
         </section>
         <section class="control-section">
@@ -102,6 +103,7 @@ export function syncControls(root, state) {
   setValue(root, 'ramp.shadow', state.ramp.shadow)
   setValue(root, 'ramp.midtone', state.ramp.midtone)
   setValue(root, 'ramp.highlight', state.ramp.highlight)
+  setValue(root, 'shadowColorRetention', state.shadowColorRetention)
   setValue(root, 'lights.hemisphere', state.lights.hemisphere)
   setValue(root, 'lights.key', state.lights.key)
   setValue(root, 'lights.fill', state.lights.fill)

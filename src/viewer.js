@@ -13,6 +13,7 @@ import {
   PerspectiveCamera,
   RedFormat,
   Scene,
+  ShaderChunk,
   SRGBColorSpace,
   UnsignedByteType,
   Vector3,
@@ -80,6 +81,38 @@ export function createViewer(container, setMessage) {
 
   const gradientMap = gradientTexture({ shadow: 75, midtone: 190, highlight: 255 })
   const toonMaterial = new MeshToonMaterial({ vertexColors: true, gradientMap })
+  let shadowColorRetention = 0
+  let toonShaderUniform = null
+  toonMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms.shadowColorRetention = { value: shadowColorRetention }
+    toonShaderUniform = shader.uniforms.shadowColorRetention
+
+    const originalChunk = ShaderChunk.gradientmap_pars_fragment
+    const target = 'return vec3( texture2D( gradientMap, coord ).r );'
+
+    if (!originalChunk.includes(target)) {
+      console.warn('Shadow retention shader patch target was not found.')
+    }
+
+    const retainedGradientChunk = originalChunk.replace(
+      target,
+      `float gradientValue = texture2D( gradientMap, coord ).r;
+
+		gradientValue = mix(
+			gradientValue,
+			1.0,
+			shadowColorRetention
+		);
+
+		return vec3( gradientValue );`,
+    )
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <gradientmap_pars_fragment>',
+      `uniform float shadowColorRetention;
+${retainedGradientChunk}`,
+    )
+  }
   const legacyMaterial = new MeshStandardMaterial({ vertexColors: true })
   const neutralMaterial = new MeshStandardMaterial({ vertexColors: true, metalness: 0, roughness: 0.92 })
   const unlitMaterial = new MeshBasicMaterial({ vertexColors: true })
@@ -106,6 +139,11 @@ export function createViewer(container, setMessage) {
   function setRamp(ramp) {
     gradientMap.image.data.set([ramp.shadow, ramp.midtone, ramp.highlight])
     gradientMap.needsUpdate = true
+  }
+
+  function setShadowColorRetention(value) {
+    shadowColorRetention = Math.min(1, Math.max(0, Number(value) || 0))
+    if (toonShaderUniform) toonShaderUniform.value = shadowColorRetention
   }
 
   function resize() {
@@ -154,6 +192,7 @@ export function createViewer(container, setMessage) {
     bloomPass.threshold = state.bloom.threshold
     bloomPass.radius = state.bloom.radius
     setRamp(state.ramp)
+    setShadowColorRetention(state.shadowColorRetention)
     setMaterials(currentPipeline)
   }
 

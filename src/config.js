@@ -4,6 +4,7 @@ export const DEFAULTS = {
   pipeline: 'mr',
   mode: 'toon',
   pose: 'Posture',
+  shadowColorRetention: 0,
   ramp: {
     shadow: 75,
     midtone: 190,
@@ -63,6 +64,7 @@ export const PRESETS = {
       ...DEFAULTS,
       preset: 'twoDBiased',
       pipeline: 'twoD',
+      shadowColorRetention: 0.12,
       ramp: { shadow: 135, midtone: 225, highlight: 255 },
       lights: { hemisphere: 1.1, key: 0.85, fill: 0.4 },
       background: '#24272b',
@@ -95,6 +97,7 @@ export function matchingPreset(state) {
     return state.pipeline === candidate.pipeline
       && state.mode === candidate.mode
       && state.background === candidate.background
+      && state.shadowColorRetention === (candidate.shadowColorRetention ?? 0)
       && JSON.stringify(state.ramp) === JSON.stringify(candidate.ramp)
       && JSON.stringify(state.lights) === JSON.stringify(candidate.lights)
       && JSON.stringify(state.bloom) === JSON.stringify(candidate.bloom)

@@ -54,6 +54,7 @@ export function stateFromUrl(search = window.location.search) {
     : state.mode === 'unlit' ? 'unlit' : DEFAULTS.pipeline
   state.ramp = ramp(params.get('ramp'), state.ramp)
   state.lights = lights(params.get('lights'), state.lights)
+  state.shadowColorRetention = number(params.get('shadow'), state.shadowColorRetention, 0, 0.4)
   const background = params.get('bg')
   if (background && /^#[0-9a-f]{6}$/i.test(background)) state.background = background
   state.bloom = bloom(params.get('bloom'), state.bloom)
@@ -77,6 +78,7 @@ export function urlForState(state, location = window.location) {
   params.set('mode', state.mode)
   params.set('pose', state.pose)
   params.set('ramp', [state.ramp.shadow, state.ramp.midtone, state.ramp.highlight].join(','))
+  params.set('shadow', state.shadowColorRetention)
   params.set('lights', [state.lights.hemisphere, state.lights.key, state.lights.fill].join(','))
   params.set('bg', state.background)
   params.set('bloom', [state.bloom.enabled ? 1 : 0, state.bloom.strength, state.bloom.threshold, state.bloom.radius].join(','))
