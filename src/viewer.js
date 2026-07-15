@@ -155,13 +155,14 @@ ${retainedGradientChunk}`,
     composer.setSize(width, height)
   }
 
-  function frameCamera() {
+  function frameCamera(facing = 'left') {
     const aspect = Math.max(camera.aspect, 0.1)
     const verticalHalfFov = (camera.fov * Math.PI) / 360
     const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * aspect)
     const radius = (MODEL_SIZE * Math.sqrt(3)) / 2
     const distance = (radius / Math.min(Math.tan(verticalHalfFov), Math.tan(horizontalHalfFov))) * 1.25
-    const direction = new Vector3(16, 11, 16).normalize()
+    const cameraX = facing === 'right' ? -16 : 16
+    const direction = new Vector3(cameraX, 11, 16).normalize()
     camera.position.copy(direction.multiplyScalar(distance))
     camera.near = Math.max(distance / 100, 0.01)
     camera.far = distance * 100
@@ -196,7 +197,7 @@ ${retainedGradientChunk}`,
     setMaterials(currentPipeline)
   }
 
-  async function setObject(nextObject, id) {
+  async function setObject(nextObject, id, { shouldFrame = true, facing = 'left' } = {}) {
     markVertexColors(nextObject)
     const frame = new Group()
     frame.name = `Rescue ${id}`
@@ -215,7 +216,7 @@ ${retainedGradientChunk}`,
     }
     currentObject = frame
     modelRoot.add(currentObject)
-    frameCamera()
+    if (shouldFrame) frameCamera(facing)
     setMaterials(currentPipeline)
   }
 
@@ -233,13 +234,13 @@ ${retainedGradientChunk}`,
 
   return {
     applyState,
-    load: async (loaded, pose) => {
+    load: async (loaded, pose, facing = 'left') => {
       setMessage('Building VOX mesh…', 'loading')
-      await setObject(loaded.getPose(pose), loaded.id)
+      await setObject(loaded.getPose(pose), loaded.id, { facing })
       setMessage(`Loaded from ${loaded.source} · ${pose}`, 'success')
     },
     setPose: async (loaded, pose) => {
-      await setObject(loaded.getPose(pose), loaded.id)
+      await setObject(loaded.getPose(pose), loaded.id, { shouldFrame: false })
       setMessage(`Loaded from ${loaded.source} · ${pose}`, 'success')
     },
     error: (message) => setMessage(message, 'error'),

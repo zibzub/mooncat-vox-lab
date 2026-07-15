@@ -1,4 +1,6 @@
 import './style.css'
+import rightFacingRescues from './right-facing-rescues.json'
+import rescuePoses from './rescue-poses.json'
 import { cloneState, presetState } from './config.js'
 import { persistState, stateFromUrl, urlForState } from './state.js'
 import { loadVox } from './vox.js'
@@ -11,6 +13,14 @@ renderShell(root)
 let state = stateFromUrl()
 let viewer
 let loadedAsset = null
+const rightFacingRescueIds = new Set(rightFacingRescues.map(String))
+const poseNames = {
+  standing: 'Posture',
+  sleeping: 'Posture2',
+  pouncing: 'Posture3',
+  stalking: 'Posture4',
+}
+const initialUrlHasPose = new URLSearchParams(window.location.search).has('pose')
 
 function updateState(nextState, { persist = true } = {}) {
   state = nextState
@@ -28,7 +38,7 @@ function patchSetting(path, rawValue) {
   updateState(next)
 }
 
-async function loadSelected(id, { showMissing = true } = {}) {
+async function loadSelected(id, { showMissing = true, preservePose = false } = {}) {
   const cleanedId = String(id).trim().replace(/[^a-zA-Z0-9_-]/g, '')
   state.id = cleanedId || state.id
   loadedAsset = null
@@ -40,12 +50,14 @@ async function loadSelected(id, { showMissing = true } = {}) {
   try {
     const loaded = await loadVox(state.id)
     loadedAsset = loaded
-    const selectedPose = setPoseOptions(root, loaded.poses, state.pose || loaded.defaultPose)
+    const traitPose = poseNames[rescuePoses[String(state.id)]]
+    const preferredPose = preservePose ? state.pose : traitPose || state.pose || loaded.defaultPose
+    const selectedPose = setPoseOptions(root, loaded.poses, preferredPose)
     state.pose = selectedPose || loaded.defaultPose
     persistState(state)
     syncControls(root, state)
     viewer.applyState(state)
-    await viewer.load(loaded, state.pose)
+    await viewer.load(loaded, state.pose, rightFacingRescueIds.has(String(state.id)) ? 'right' : 'left')
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load the VOX file.'
     if (showMissing) viewer.error(message)
@@ -95,4 +107,4 @@ bindControls(root, {
   },
 })
 
-loadSelected(state.id)
+loadSelected(state.id, { preservePose: initialUrlHasPose })
