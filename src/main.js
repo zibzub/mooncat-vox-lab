@@ -1,7 +1,7 @@
 import './style.css'
 import rightFacingRescues from './right-facing-rescues.json'
 import rescuePoses from './rescue-poses.json'
-import { cloneState, presetState } from './config.js'
+import { LIGHTING_PRESETS, cloneState, presetState } from './config.js'
 import { persistState, stateFromUrl, urlForState } from './state.js'
 import { loadVox } from './vox.js'
 import { createViewer } from './viewer.js'
@@ -89,6 +89,15 @@ bindControls(root, {
     preset: 'custom',
   }),
   preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id, state.pose)),
+  lighting: (name) => {
+    const preset = LIGHTING_PRESETS[name]
+    if (!preset) return
+    updateState({
+      ...state,
+      lights: { ...preset.lights },
+      preset: 'custom',
+    })
+  },
   reset: () => updateState(presetState('issue176', state.id, state.pose)),
   copy: copyShareLink,
   pose: async (pose) => {

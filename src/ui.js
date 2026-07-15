@@ -1,4 +1,4 @@
-import { PRESETS } from './config.js'
+import { LIGHTING_PRESETS, PRESETS, matchingLightingPreset } from './config.js'
 
 function range(id, label, min, max, step, value, suffix = '') {
   return `<label class="range-control" for="${id}">
@@ -67,6 +67,9 @@ export function renderShell(root) {
         </section>
         <section class="control-section">
           <div class="section-heading"><span class="section-number">03</span><h2>Lighting</h2></div>
+          <div class="lighting-presets" role="radiogroup" aria-label="Lighting preset">
+            ${Object.entries(LIGHTING_PRESETS).map(([key, preset]) => `<label><input type="radio" name="lighting-preset" value="${key}"><span>${preset.label}</span></label>`).join('')}
+          </div>
           ${range('lights.hemisphere', 'Hemisphere', 0, 4, 0.05, 0.5)}
           ${range('lights.key', 'Key light', 0, 6, 0.05, 1.6)}
           ${range('lights.fill', 'Fill light', 0, 4, 0.05, 0.15)}
@@ -106,6 +109,10 @@ export function syncControls(root, state) {
   setValue(root, 'lights.hemisphere', state.lights.hemisphere)
   setValue(root, 'lights.key', state.lights.key)
   setValue(root, 'lights.fill', state.lights.fill)
+  const lightingPreset = matchingLightingPreset(state.lights)
+  root.querySelectorAll('input[name="lighting-preset"]').forEach((input) => {
+    input.checked = input.value === lightingPreset
+  })
   setValue(root, 'background', state.background)
   setValue(root, 'bloom.enabled', state.bloom.enabled)
   setValue(root, 'bloom.strength', state.bloom.strength)
@@ -178,6 +185,11 @@ export function bindControls(root, handlers) {
   })
   root.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => handlers.mode(button.dataset.mode)))
   root.querySelector('#preset').addEventListener('change', (event) => handlers.preset(event.target.value))
+  root.querySelectorAll('input[name="lighting-preset"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      if (input.checked) handlers.lighting(input.value)
+    })
+  })
   root.querySelector('#pose-select').addEventListener('change', (event) => handlers.pose(event.target.value))
   root.querySelector('#reset').addEventListener('click', handlers.reset)
   root.querySelector('#copy-link').addEventListener('click', handlers.copy)

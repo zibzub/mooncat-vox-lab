@@ -9,13 +9,14 @@ The viewer places the original 2D MoonCat in the corner for reference, provides 
 ## Using the viewer
 
 1. Enter a MoonCat **Rescue ID** and select **Load**.
-2. Choose a **Pose** when the VOX file contains more than one supported posture.
-3. Start with a preset, usually **Issue #176 MR**.
-4. Drag the model to orbit it and scroll or pinch to zoom.
-5. Compare the model with the 2D reference image in the corner.
-6. Adjust one or two settings at a time.
-7. Test the same adjustment on several different MoonCats.
-8. Select **Copy Share Link** to preserve the current Rescue ID, pose, preset, and settings in the URL.
+2. The viewer automatically opens the MoonCat in its trait-derived pose and on the correct left- or right-facing camera side.
+3. Choose another **Pose** when you want to compare supported posture layers.
+4. Start with a preset, usually **Issue #176 MR**.
+5. Drag the model to orbit it and scroll or pinch to zoom.
+6. Compare the model with the 2D reference image in the corner.
+7. Adjust one or two settings at a time.
+8. Test the same adjustment on several different MoonCats.
+9. Select **Copy Share Link** to preserve the current Rescue ID, pose, preset, and settings in the URL.
 
 **Reset Defaults** returns the viewer to the exact Issue #176 MR baseline.
 
@@ -38,6 +39,7 @@ The original issue suggested experimenting with Three.js toon shading, a program
 | --- | --- |
 | **Issue #176 MR** | The submitted issue #176 rendering baseline. Use this as the main starting point when proposing small improvements. |
 | **ChainStation legacy** | The older ChainStation rendering. Useful for seeing what changed and for checking whether an adjustment accidentally recreates an old problem. |
+| **Possible hybrid** | Keeps the Issue #176 toon pipeline while using broader, legacy-inspired lighting and a rebalanced toon ramp. Intended as an experimental middle ground rather than a fixed baseline. |
 | **Neutral game lighting** | Shows the model with conventional, neutral 3D lighting. Useful as a reference for how the VOX might look in a game rather than as a close match to the 2D image. |
 | **2D-biased** | Uses softer, brighter toon shading intended to move closer to the 2D MoonCat while keeping visible 3D form. |
 | **Palette reference — unlit** | Shows the corrected VOX palette without light-based darkening. This is a technical color reference, not a recommended final presentation. |
@@ -81,7 +83,9 @@ When comparing these directions, try both presets on the same MoonCats, poses, c
 ### Model
 
 - **Rescue ID** loads that MoonCat's VOX file and 2D reference image.
-- **Pose** switches between supported posture layers already contained in the loaded VOX. Changing pose does not download the file again.
+- On first load, the viewer uses bundled MoonCat trait data to choose the cat's native pose and correct left- or right-facing camera side.
+- **Pose** switches between supported posture layers already contained in the loaded VOX. Changing pose does not download the file again or reset the current camera angle.
+- A pose supplied explicitly in a shared URL takes precedence over the trait-derived pose.
 
 ### Look
 
@@ -113,9 +117,19 @@ The effect can be subtle, especially on already bright faces. It only applies to
 
 ### Lighting
 
+The radio buttons provide quick lighting-only comparisons without changing the selected material, toon ramp, background, pose, or other settings:
+
+- **Legacy** uses ChainStation's lighting values: hemisphere `2.5`, key `1.25`, fill `0.5`.
+- **MR176** uses the submitted MR values: hemisphere `0.5`, key `1.6`, fill `0.15`.
+- **Hybrid** uses hemisphere `1.6`, key `1.25`, fill `0.5`.
+
+The matching radio remains selected only while all three values exactly match that lighting set. Manual slider changes create a custom lighting state.
+
 - **Hemisphere** is broad light from the environment. Raising it brightens much of the model and softens contrast.
 - **Key light** is the main directional light. It creates the strongest sense of shape and determines which faces reach the brightest toon band.
 - **Fill light** shines from the opposite direction and prevents the darker side of the model from becoming too deep.
+
+The key and fill lights stay fixed in world space. For right-facing cats, the initial camera moves to the opposite X side while the lights remain in the same positions, matching ChainStation's current behavior.
 
 A high ambient or fill value can make colors easier to see, but too much will flatten the model. Strong key lighting can improve shape, but may make one side overly bright and the other too dark.
 
@@ -238,6 +252,8 @@ This repository intentionally does not include binary VOX samples.
 - The legacy pipeline intentionally retains ChainStation's historical raw-color behavior for comparison.
 - The 2D reference image is requested remotely and is not stored in this repository.
 - Share URLs preserve the rescue ID, pose, preset, material mode, toon ramp, lighting, background, shadow color retention, and bloom settings.
+- Bundled compact metadata selects each rescue's native pose and initial camera-facing side without a runtime MoonCat API dependency.
+- Camera facing and lighting are independent: right-facing cats mirror the initial camera X position, while the key and fill lights remain fixed in world space.
 - VOX files are loaded locally first, then from public IPFS gateways using CID `bafybeifxqtzf635xy3q3lrp2cygrz2vatregvtnfe2dsl4jskjyuneexzu`.
 
 ### Issue #176 MR baseline
@@ -259,6 +275,17 @@ This repository intentionally does not include binary VOX samples.
 - reverse light: white, intensity `0.5`
 - background: `#111111`
 - no tone mapping
+
+### Possible hybrid preset
+
+- keeps the Issue #176 corrected-color `MeshToonMaterial` pipeline
+- toon ramp: `[55, 170, 245]`
+- hemisphere light intensity: `1.6`
+- key light intensity: `1.25`
+- reverse fill intensity: `0.5`
+- background: `#202226`
+- bloom off
+- shadow color retention `0`
 
 ### Additional rendering experiments
 

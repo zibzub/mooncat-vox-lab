@@ -366,6 +366,40 @@ input[type="number"],
 .subheading {
   margin-top: 2px;
 }
+.lighting-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin: -4px 0 17px;
+}
+.lighting-presets label {
+  position: relative;
+  min-width: 0;
+}
+.lighting-presets input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.lighting-presets span {
+  display: block;
+  padding: 7px 4px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  font-size: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.lighting-presets input:checked + span {
+  border-color: #5e94c6;
+  color: #d7edff;
+  background: var(--accent-dim);
+}
+.lighting-presets input:focus-visible + span {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
 .range-control {
   display: block;
   margin: 13px 0;

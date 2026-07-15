@@ -24,6 +24,20 @@ export const DEFAULTS = {
   },
 }
 
+export const LIGHTING_PRESETS = {
+  legacy: { label: 'Legacy', lights: { hemisphere: 2.5, key: 1.25, fill: 0.5 } },
+  mr176: { label: 'MR176', lights: { hemisphere: 0.5, key: 1.6, fill: 0.15 } },
+  hybrid: { label: 'Hybrid', lights: { hemisphere: 1.6, key: 1.25, fill: 0.5 } },
+}
+
+export function matchingLightingPreset(lights) {
+  return Object.entries(LIGHTING_PRESETS).find(([, preset]) =>
+    preset.lights.hemisphere === lights.hemisphere
+      && preset.lights.key === lights.key
+      && preset.lights.fill === lights.fill,
+  )?.[0] ?? ''
+}
+
 export const PRESETS = {
   issue176: {
     label: 'Issue #176 MR',
@@ -35,8 +49,17 @@ export const PRESETS = {
       ...DEFAULTS,
       preset: 'legacy',
       pipeline: 'legacy',
-      lights: { hemisphere: 2.5, key: 1.25, fill: 0.5 },
+      lights: { ...LIGHTING_PRESETS.legacy.lights },
       background: '#111111',
+    },
+  },
+  possibleHybrid: {
+    label: 'Possible hybrid',
+    state: {
+      ...DEFAULTS,
+      preset: 'possibleHybrid',
+      ramp: { shadow: 55, midtone: 170, highlight: 245 },
+      lights: { ...LIGHTING_PRESETS.hybrid.lights },
     },
   },
   unlit: {
