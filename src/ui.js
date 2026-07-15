@@ -39,6 +39,13 @@ export function renderShell(root) {
             <div class="input-row"><input id="rescue-id" name="id" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234"><button type="submit" class="button button-primary">Load</button></div>
           </form>
           <p id="load-status" class="helper-text">Expected path: <code>public/vox/&lt;id&gt;.vox</code></p>
+          <div class="reference-card" aria-live="polite">
+            <div class="reference-heading"><span>OG 2D reference</span><span id="reference-status">Waiting</span></div>
+            <div class="reference-image-wrap">
+              <img id="reference-image" alt="" hidden>
+              <span id="reference-placeholder">Load a rescue to compare the original 2D MoonCat.</span>
+            </div>
+          </div>
         </section>
         <section class="control-section">
           <div class="section-heading"><span class="section-number">02</span><h2>Look</h2></div>
@@ -55,13 +62,13 @@ export function renderShell(root) {
           ${range('ramp.shadow', 'Shadow', 0, 255, 1, 75)}
           ${range('ramp.midtone', 'Midtone', 0, 255, 1, 190)}
           ${range('ramp.highlight', 'Highlight', 0, 255, 1, 255)}
-          <label class="color-control" for="background"><span>Background</span><input id="background" data-setting="background" type="color" value="#15191f"></label>
+          <label class="color-control" for="background"><span>Background</span><input id="background" data-setting="background" type="color" value="#202226"></label>
         </section>
         <section class="control-section">
           <div class="section-heading"><span class="section-number">03</span><h2>Lighting</h2></div>
-          ${range('lights.hemisphere', 'Hemisphere', 0, 4, 0.05, 0.8)}
-          ${range('lights.key', 'Key light', 0, 6, 0.05, 2.2)}
-          ${range('lights.fill', 'Fill light', 0, 4, 0.05, 0.35)}
+          ${range('lights.hemisphere', 'Hemisphere', 0, 4, 0.05, 0.5)}
+          ${range('lights.key', 'Key light', 0, 6, 0.05, 1.6)}
+          ${range('lights.fill', 'Fill light', 0, 4, 0.05, 0.15)}
         </section>
         <section class="control-section bloom-section">
           <div class="section-heading"><span class="section-number">04</span><h2>Bloom</h2><span id="bloom-state" class="toggle-state">Off</span><label class="switch"><input id="bloom.enabled" data-setting="bloom.enabled" type="checkbox"><span></span></label></div>
@@ -103,10 +110,39 @@ export function syncControls(root, state) {
   setValue(root, 'bloom.threshold', state.bloom.threshold)
   setValue(root, 'bloom.radius', state.bloom.radius)
   root.querySelectorAll('[data-mode]').forEach((button) => button.classList.toggle('active', button.dataset.mode === state.mode))
-  root.querySelector('#render-mode-label').textContent = state.mode === 'unlit' ? 'UNLIT PALETTE' : 'TOON LIT'
+  root.querySelector('#render-mode-label').textContent = state.pipeline === 'legacy'
+    ? 'LEGACY STANDARD'
+    : state.pipeline === 'unlit' ? 'UNLIT PALETTE' : 'TOON LIT'
   root.querySelector('#bloom-controls').classList.toggle('is-disabled', !state.bloom.enabled)
   root.querySelector('#bloom-state').textContent = state.bloom.enabled ? 'Enabled' : 'Off'
   root.querySelector('#bloom-state').classList.toggle('is-enabled', state.bloom.enabled)
+}
+
+export function updateReferenceImage(root, id) {
+  const image = root.querySelector('#reference-image')
+  const placeholder = root.querySelector('#reference-placeholder')
+  const status = root.querySelector('#reference-status')
+  const requestId = String(id)
+  image.dataset.requestId = requestId
+  image.alt = `Original 2D MoonCat rescue ${requestId}`
+  image.hidden = true
+  placeholder.hidden = false
+  placeholder.textContent = `Loading rescue ${requestId}…`
+  status.textContent = 'Loading'
+  image.onload = () => {
+    if (image.dataset.requestId !== requestId) return
+    image.hidden = false
+    placeholder.hidden = true
+    status.textContent = 'Available'
+  }
+  image.onerror = () => {
+    if (image.dataset.requestId !== requestId) return
+    image.hidden = true
+    placeholder.hidden = false
+    placeholder.textContent = '2D reference unavailable'
+    status.textContent = 'Unavailable'
+  }
+  image.src = `https://api.mooncatrescue.com/mooncat/image/${encodeURIComponent(requestId)}.png?costumes=false&acc=&glow=0&scale=3`
 }
 
 export function bindControls(root, handlers) {

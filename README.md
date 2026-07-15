@@ -1,6 +1,6 @@
 # MoonCat VOX Lab
 
-Standalone Vite + Three.js tuning site for the MoonCat VOX renderer. It has no wallet, API, or backend dependency. The viewer starts in the issue #176 toon-lit configuration and keeps the selected rescue ID and controls in the URL.
+Standalone Vite + Three.js tuning site for the MoonCat VOX renderer. It has no wallet or backend dependency. The viewer starts in the issue #176 MR toon-lit configuration and keeps the selected rescue ID and controls in the URL.
 
 ## Run locally
 
@@ -29,4 +29,6 @@ For example, `public/vox/1234.vox` is loaded by entering `1234` in the Rescue ID
 
 ## Controls
 
-The Look section switches between a toon-lit `MeshToonMaterial` and an unlit `MeshBasicMaterial` over the same corrected vertex-color attribute. Lighting, toon ramp values, background, and optional `UnrealBloomPass` settings update live. Reset Defaults restores the current issue #176 defaults; Copy Share Link copies a URL that reproduces the current state.
+The named `Issue #176 MR` preset matches the submitted MR using Three.js `0.169.0`, no tone mapping, linearized vertex colors, and a RedFormat toon ramp. `ChainStation legacy` restores the pre-MR `MeshStandardMaterial` path with raw normalized sRGB colors and the old light setup. `Unlit palette` is a corrected linear-color comparison. Lighting, toon ramp values, background, and optional `UnrealBloomPass` settings update live. Reset Defaults restores the issue #176 MR defaults; Copy Share Link copies a URL that reproduces the current state.
+
+The Model section also shows the current rescue's canonical 2D image from the remote MoonCat API. The image is not downloaded or committed; an unavailable remote response is shown as a small status state.

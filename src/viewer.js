@@ -1,5 +1,4 @@
 import {
-  ACESFilmicToneMapping,
   Box3,
   Color,
   DataTexture,
@@ -7,12 +6,15 @@ import {
   Group,
   HemisphereLight,
   MeshBasicMaterial,
+  MeshStandardMaterial,
   MeshToonMaterial,
+  NoToneMapping,
   NearestFilter,
   PerspectiveCamera,
-  RGBFormat,
+  RedFormat,
   Scene,
   SRGBColorSpace,
+  UnsignedByteType,
   Vector3,
   WebGLRenderer,
 } from 'three'
@@ -25,12 +27,8 @@ import { markVertexColors } from './vox.js'
 const MODEL_SIZE = 10
 
 function gradientTexture(ramp) {
-  const bytes = new Uint8Array([
-    ramp.shadow, ramp.shadow, ramp.shadow,
-    ramp.midtone, ramp.midtone, ramp.midtone,
-    ramp.highlight, ramp.highlight, ramp.highlight,
-  ])
-  const texture = new DataTexture(bytes, 3, 1, RGBFormat)
+  const bytes = new Uint8Array([ramp.shadow, ramp.midtone, ramp.highlight])
+  const texture = new DataTexture(bytes, 3, 1, RedFormat, UnsignedByteType)
   texture.magFilter = NearestFilter
   texture.minFilter = NearestFilter
   texture.generateMipmaps = false
@@ -57,8 +55,7 @@ export function createViewer(container, setMessage) {
   const renderer = new WebGLRenderer({ antialias: true, alpha: false })
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   renderer.outputColorSpace = SRGBColorSpace
-  renderer.toneMapping = ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1
+  renderer.toneMapping = NoToneMapping
   container.appendChild(renderer.domElement)
 
   const controls = new OrbitControls(camera, renderer.domElement)
@@ -70,11 +67,9 @@ export function createViewer(container, setMessage) {
   const modelRoot = new Group()
   scene.add(modelRoot)
 
-  const hemisphere = new HemisphereLight(0xd5e6ff, 0x252b38, 0.8)
-  const key = new DirectionalLight(0xffffff, 2.2)
-  key.position.set(2.5, 4, 3)
-  const fill = new DirectionalLight(0x91a8cc, 0.35)
-  fill.position.set(-2, 1, -3)
+  const hemisphere = new HemisphereLight(0xffffff, 0x111111, 0.5)
+  const key = new DirectionalLight(0xffffff, 1.6)
+  const fill = new DirectionalLight(0xffffff, 0.15)
   scene.add(hemisphere, key, fill)
 
   const renderPass = new RenderPass(scene, camera)
@@ -85,24 +80,28 @@ export function createViewer(container, setMessage) {
 
   const gradientMap = gradientTexture({ shadow: 75, midtone: 190, highlight: 255 })
   const toonMaterial = new MeshToonMaterial({ vertexColors: true, gradientMap })
+  const legacyMaterial = new MeshStandardMaterial({ vertexColors: true })
   const unlitMaterial = new MeshBasicMaterial({ vertexColors: true })
   let currentObject = null
-  let currentMode = 'toon'
+  let currentPipeline = 'mr'
   let bloomEnabled = false
 
-  function setMaterials(mode) {
-    currentMode = mode
+  function setMaterials(pipeline) {
+    currentPipeline = pipeline
+    const material = pipeline === 'legacy'
+      ? legacyMaterial
+      : pipeline === 'unlit' ? unlitMaterial : toonMaterial
+    const colorAttribute = pipeline === 'legacy' ? 'colorRaw' : 'colorLinear'
     modelRoot.traverse((child) => {
-      if (child.isMesh) child.material = mode === 'unlit' ? unlitMaterial : toonMaterial
+      if (!child.isMesh) return
+      const attribute = child.geometry.getAttribute(colorAttribute)
+      if (attribute) child.geometry.setAttribute('color', attribute)
+      child.material = material
     })
   }
 
   function setRamp(ramp) {
-    gradientMap.image.data.set([
-      ramp.shadow, ramp.shadow, ramp.shadow,
-      ramp.midtone, ramp.midtone, ramp.midtone,
-      ramp.highlight, ramp.highlight, ramp.highlight,
-    ])
+    gradientMap.image.data.set([ramp.shadow, ramp.midtone, ramp.highlight])
     gradientMap.needsUpdate = true
   }
 
@@ -132,9 +131,15 @@ export function createViewer(container, setMessage) {
   }
 
   function applyState(state) {
+    currentPipeline = state.pipeline ?? (state.mode === 'unlit' ? 'unlit' : 'mr')
     scene.background = new Color(state.background)
+    const legacy = currentPipeline === 'legacy'
+    hemisphere.color.setHex(legacy ? 0xcccccc : 0xffffff)
+    hemisphere.groundColor.setHex(legacy ? 0x444444 : 0x111111)
     hemisphere.intensity = state.lights.hemisphere
+    key.position.set(1.5, 3, 2.5)
     key.intensity = state.lights.key
+    fill.position.set(-1.5, -3, -2.5)
     fill.intensity = state.lights.fill
     bloomEnabled = state.bloom.enabled
     bloomPass.enabled = true
@@ -142,7 +147,7 @@ export function createViewer(container, setMessage) {
     bloomPass.threshold = state.bloom.threshold
     bloomPass.radius = state.bloom.radius
     setRamp(state.ramp)
-    setMaterials(state.mode)
+    setMaterials(currentPipeline)
   }
 
   async function setObject(nextObject, id) {
@@ -160,12 +165,12 @@ export function createViewer(container, setMessage) {
 
     if (currentObject) {
       modelRoot.remove(currentObject)
-      disposeObject(currentObject, new Set([toonMaterial, unlitMaterial]))
+      disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, unlitMaterial]))
     }
     currentObject = frame
     modelRoot.add(currentObject)
     frameCamera()
-    setMaterials(currentMode)
+    setMaterials(currentPipeline)
   }
 
   function render() {
@@ -192,9 +197,10 @@ export function createViewer(container, setMessage) {
       resizeObserver.disconnect()
       window.removeEventListener('resize', resize)
       renderer.setAnimationLoop(null)
-      if (currentObject) disposeObject(currentObject, new Set([toonMaterial, unlitMaterial]))
+      if (currentObject) disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, unlitMaterial]))
       gradientMap.dispose()
       toonMaterial.dispose()
+      legacyMaterial.dispose()
       unlitMaterial.dispose()
       composer.dispose()
       renderer.dispose()

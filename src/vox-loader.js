@@ -175,7 +175,8 @@ export class MoonCatVOXMesh extends Mesh {
     const size = chunk.size
     const palette = chunk.palette
     const vertices = []
-    const colors = []
+    const rawColors = []
+    const linearColors = []
     const nx = [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1]
     const px = [1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0]
     const py = [0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1]
@@ -183,11 +184,12 @@ export class MoonCatVOXMesh extends Mesh {
     const nz = [0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0]
     const pz = [0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1]
 
-    function add(tile, x, y, z, color) {
+    function add(tile, x, y, z, rawColor, linearColor) {
       const coordinate = [x - size.x / 2, y - size.z / 2, z + size.y / 2]
       for (let index = 0; index < 18; index += 3) {
         vertices.push(tile[index] + coordinate[0], tile[index + 1] + coordinate[1], tile[index + 2] + coordinate[2])
-        colors.push(color.r, color.g, color.b)
+        rawColors.push(rawColor.r, rawColor.g, rawColor.b)
+        linearColors.push(linearColor.r, linearColor.g, linearColor.b)
       }
     }
 
@@ -206,24 +208,27 @@ export class MoonCatVOXMesh extends Mesh {
       const y = data[index + 1]
       const z = data[index + 2]
       const paletteValue = palette[data[index + 3]] ?? 0xffffff
-      const color = new Color(
+      const rawColor = new Color(
         (paletteValue & 0xff) / 0xff,
         ((paletteValue >> 8) & 0xff) / 0xff,
         ((paletteValue >> 16) & 0xff) / 0xff,
-      ).convertSRGBToLinear()
+      )
+      const linearColor = rawColor.clone().convertSRGBToLinear()
       const position = x + y * offsetY + z * offsetZ
 
-      if (occupied[position + 1] === 0 || x === size.x - 1) add(px, x, z, -y, color)
-      if (occupied[position - 1] === 0 || x === 0) add(nx, x, z, -y, color)
-      if (occupied[position + offsetY] === 0 || y === size.y - 1) add(ny, x, z, -y, color)
-      if (occupied[position - offsetY] === 0 || y === 0) add(py, x, z, -y, color)
-      if (occupied[position + offsetZ] === 0 || z === size.z - 1) add(pz, x, z, -y, color)
-      if (occupied[position - offsetZ] === 0 || z === 0) add(nz, x, z, -y, color)
+      if (occupied[position + 1] === 0 || x === size.x - 1) add(px, x, z, -y, rawColor, linearColor)
+      if (occupied[position - 1] === 0 || x === 0) add(nx, x, z, -y, rawColor, linearColor)
+      if (occupied[position + offsetY] === 0 || y === size.y - 1) add(ny, x, z, -y, rawColor, linearColor)
+      if (occupied[position - offsetY] === 0 || y === 0) add(py, x, z, -y, rawColor, linearColor)
+      if (occupied[position + offsetZ] === 0 || z === size.z - 1) add(pz, x, z, -y, rawColor, linearColor)
+      if (occupied[position - offsetZ] === 0 || z === 0) add(nz, x, z, -y, rawColor, linearColor)
     }
 
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3))
-    geometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
+    geometry.setAttribute('colorRaw', new Float32BufferAttribute(rawColors, 3))
+    geometry.setAttribute('colorLinear', new Float32BufferAttribute(linearColors, 3))
+    geometry.setAttribute('color', geometry.getAttribute('colorLinear'))
     geometry.computeVertexNormals()
     super(geometry, new MeshStandardMaterial({ vertexColors: true }))
   }

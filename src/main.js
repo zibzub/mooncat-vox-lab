@@ -3,7 +3,7 @@ import { cloneState, presetState } from './config.js'
 import { persistState, stateFromUrl, urlForState } from './state.js'
 import { loadVox } from './vox.js'
 import { createViewer } from './viewer.js'
-import { bindControls, renderShell, setLoadStatus, syncControls } from './ui.js'
+import { bindControls, renderShell, setLoadStatus, syncControls, updateReferenceImage } from './ui.js'
 
 const root = document.querySelector('#app')
 renderShell(root)
@@ -33,6 +33,7 @@ async function loadSelected(id, { showMissing = true, manual = false } = {}) {
   if (manual) state.preset = 'custom'
   persistState(state)
   syncControls(root, state)
+  updateReferenceImage(root, state.id)
   setLoadStatus(root, `Loading rescue ${state.id}…`, 'loading')
   try {
     const loaded = await loadVox(state.id)
@@ -62,7 +63,12 @@ viewer.applyState(state)
 bindControls(root, {
   load: (id) => loadSelected(id, { manual: true }),
   change: patchSetting,
-  mode: (mode) => updateState({ ...state, mode, preset: 'custom' }),
+  mode: (mode) => updateState({
+    ...state,
+    mode,
+    pipeline: mode === 'unlit' ? 'unlit' : 'mr',
+    preset: 'custom',
+  }),
   preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id)),
   reset: () => updateState(presetState('issue176', state.id)),
   copy: copyShareLink,

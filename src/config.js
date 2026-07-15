@@ -1,6 +1,7 @@
 export const DEFAULTS = {
   id: '0',
   preset: 'issue176',
+  pipeline: 'mr',
   mode: 'toon',
   ramp: {
     shadow: 75,
@@ -8,11 +9,11 @@ export const DEFAULTS = {
     highlight: 255,
   },
   lights: {
-    hemisphere: 0.8,
-    key: 2.2,
-    fill: 0.35,
+    hemisphere: 0.5,
+    key: 1.6,
+    fill: 0.15,
   },
-  background: '#15191f',
+  background: '#202226',
   bloom: {
     enabled: false,
     strength: 0.8,
@@ -23,13 +24,25 @@ export const DEFAULTS = {
 
 export const PRESETS = {
   issue176: {
-    label: 'Current issue #176',
+    label: 'Issue #176 MR',
     state: DEFAULTS,
+  },
+  legacy: {
+    label: 'ChainStation legacy',
+    state: {
+      ...DEFAULTS,
+      preset: 'legacy',
+      pipeline: 'legacy',
+      lights: { hemisphere: 2.5, key: 1.25, fill: 0.5 },
+      background: '#111111',
+    },
   },
   unlit: {
     label: 'Unlit palette',
     state: {
       ...DEFAULTS,
+      preset: 'unlit',
+      pipeline: 'unlit',
       mode: 'unlit',
     },
   },
@@ -37,6 +50,7 @@ export const PRESETS = {
     label: 'High contrast',
     state: {
       ...DEFAULTS,
+      pipeline: 'mr',
       ramp: { shadow: 24, midtone: 155, highlight: 255 },
       lights: { hemisphere: 0.35, key: 3.2, fill: 0.1 },
       background: '#080a0f',
@@ -46,6 +60,7 @@ export const PRESETS = {
     label: 'Soft lighting',
     state: {
       ...DEFAULTS,
+      pipeline: 'mr',
       ramp: { shadow: 92, midtone: 182, highlight: 242 },
       lights: { hemisphere: 1.35, key: 1.15, fill: 0.8 },
       background: '#232831',
@@ -74,7 +89,8 @@ export function matchingPreset(state) {
   const keys = Object.keys(PRESETS)
   return keys.find((key) => {
     const candidate = PRESETS[key].state
-    return state.mode === candidate.mode
+    return state.pipeline === candidate.pipeline
+      && state.mode === candidate.mode
       && state.background === candidate.background
       && JSON.stringify(state.ramp) === JSON.stringify(candidate.ramp)
       && JSON.stringify(state.lights) === JSON.stringify(candidate.lights)
