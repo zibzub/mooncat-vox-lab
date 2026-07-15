@@ -464,12 +464,14 @@ input[type="color"] {
   .workspace {
     grid-template-columns: 1fr;
   }
-  .viewer-card {
-    min-height: 370px;
+ .viewer-card {
+    min-height: 560px;
   }
   .viewer-stage {
-    min-height: 263px;
+    flex: 1 1 420px;
+    min-height: 420px;
   }
+
   .control-panel {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -503,10 +505,11 @@ input[type="color"] {
     border-inline: 0;
   }
   .viewer-card {
-    min-height: 370px;
+    min-height: 490px;
   }
   .viewer-stage {
-    min-height: 263px;
+    flex: 1 1 350px;
+    min-height: 350px;
   }
   .viewer-toolbar,
   .viewer-footer {
