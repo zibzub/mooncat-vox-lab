@@ -45,6 +45,37 @@ The original issue suggested experimenting with Three.js toon shading, a program
 
 The exact Issue #176 and legacy presets are comparison baselines. Avoid changing their stored values when experimenting; create a Custom state instead.
 
+## Neutral game lighting as an alternative direction
+
+The **Neutral game lighting** preset is not currently being proposed as a replacement for the Issue #176 MR, but it is included because it represents a reasonable alternative direction for the ChainStation VOX viewer.
+
+It keeps corrected MoonCat palette colors while using smoother, more conventional 3D lighting instead of three distinct toon bands. In practice, this can make the model feel more natural and game-like, with softer transitions between lit and shaded faces.
+
+Possible advantages:
+
+- smoother, more familiar 3D shading;
+- fewer abrupt dark patches on angled surfaces;
+- a simpler material setup without a custom toon-gradient adjustment;
+- a result that may be easier to tune consistently across many MoonCats.
+
+Possible disadvantages:
+
+- it may feel less connected to the flat, pixel-art character of the original MoonCats;
+- gradual lighting can soften the crisp voxel structure;
+- shaded faces still move away from the source palette, just more smoothly;
+- pale, dark, or closely colored details may lose some separation at small display sizes.
+
+The difference is partly a style choice rather than a single correct technical answer:
+
+| Direction | Main strength | Main tradeoff |
+| --- | --- | --- |
+| **Issue #176 toon lighting** | Crisp voxel shading with explicitly controlled shadow, midtone, and highlight levels | Lighting bands can feel harsher or make some faces look too dark |
+| **Neutral game lighting** | Smooth, conventional 3D presentation with corrected colors | Can look more generic and less like a 3D extension of the original pixel art |
+
+Community feedback may help decide what matters most for ChainStation: close visual continuity with the 2D MoonCats, strong readable voxel form, conventional 3D presentation, or a balance between them.
+
+When comparing these directions, try both presets on the same MoonCats, poses, camera angles, and screen sizes. Feedback is most useful when it mentions which cats were tested and whether the preference changes for dark, pale, saturated, or multi-colored cats.
+
 ## Settings explained
 
 ### Model

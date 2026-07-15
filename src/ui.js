@@ -11,7 +11,6 @@ export function renderShell(root) {
   root.innerHTML = `
     <header class="topbar">
       <div class="brand-lockup">
-        <span class="brand-mark">MC</span>
         <div><strong>MoonCat VOX Lab</strong><span>renderer tuning bench</span></div>
       </div>
       <div class="header-note">Three.js · issue #176</div>
