@@ -45,9 +45,11 @@ export function stateFromUrl(search = window.location.search) {
   const params = new URLSearchParams(search)
   const state = cloneState(DEFAULTS)
   state.id = (params.get('id') || DEFAULTS.id).trim().replace(/[^a-zA-Z0-9_-]/g, '') || DEFAULTS.id
+  const requestedPose = params.get('pose') || DEFAULTS.pose
+  state.pose = /^Posture(?:[2-4])?$/.test(requestedPose) ? requestedPose : DEFAULTS.pose
   state.mode = params.get('mode') === 'unlit' ? 'unlit' : DEFAULTS.mode
   const requestedPipeline = params.get('pipeline')
-  state.pipeline = ['mr', 'legacy', 'unlit'].includes(requestedPipeline)
+  state.pipeline = ['mr', 'legacy', 'neutral', 'twoD', 'unlit'].includes(requestedPipeline)
     ? requestedPipeline
     : state.mode === 'unlit' ? 'unlit' : DEFAULTS.pipeline
   state.ramp = ramp(params.get('ramp'), state.ramp)
@@ -59,10 +61,10 @@ export function stateFromUrl(search = window.location.search) {
   state.preset = requestedPreset && (requestedPreset === 'custom' || PRESETS[requestedPreset])
     ? requestedPreset
     : matchingPreset(state)
-  if (state.preset === 'legacy') state.pipeline = 'legacy'
-  if (state.preset === 'unlit') {
-    state.pipeline = 'unlit'
-    state.mode = 'unlit'
+  const namedPreset = PRESETS[state.preset]
+  if (namedPreset) {
+    state.pipeline = namedPreset.state.pipeline
+    state.mode = namedPreset.state.mode
   }
   return state
 }
@@ -73,6 +75,7 @@ export function urlForState(state, location = window.location) {
   params.set('preset', state.preset ?? matchingPreset(state))
   params.set('pipeline', state.pipeline)
   params.set('mode', state.mode)
+  params.set('pose', state.pose)
   params.set('ramp', [state.ramp.shadow, state.ramp.midtone, state.ramp.highlight].join(','))
   params.set('lights', [state.lights.hemisphere, state.lights.key, state.lights.fill].join(','))
   params.set('bg', state.background)

@@ -28,6 +28,12 @@ export function renderShell(root) {
             <strong id="viewer-message-title">No sample loaded</strong>
             <p id="viewer-message-detail">Add a file at <code>public/vox/&lt;rescue-id&gt;.vox</code>, then load that ID.</p>
           </div>
+          <div class="reference-overlay" aria-live="polite">
+            <span class="reference-overlay-label">OG 2D</span>
+            <span id="reference-status">Waiting</span>
+            <img id="reference-image" alt="" hidden>
+            <span id="reference-placeholder">Load a rescue to compare the original 2D MoonCat.</span>
+          </div>
         </div>
         <div class="viewer-footer"><span>Vertex colors: sRGB → linear once at VOX decode</span><span id="render-mode-label">TOON LIT</span></div>
       </section>
@@ -39,13 +45,8 @@ export function renderShell(root) {
             <div class="input-row"><input id="rescue-id" name="id" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234"><button type="submit" class="button button-primary">Load</button></div>
           </form>
           <p id="load-status" class="helper-text">Expected path: <code>public/vox/&lt;id&gt;.vox</code></p>
-          <div class="reference-card" aria-live="polite">
-            <div class="reference-heading"><span>OG 2D reference</span><span id="reference-status">Waiting</span></div>
-            <div class="reference-image-wrap">
-              <img id="reference-image" alt="" hidden>
-              <span id="reference-placeholder">Load a rescue to compare the original 2D MoonCat.</span>
-            </div>
-          </div>
+          <label class="field-label pose-label" for="pose-select">Pose</label>
+          <select id="pose-select" class="select-control" disabled><option>Load a model first</option></select>
         </section>
         <section class="control-section">
           <div class="section-heading"><span class="section-number">02</span><h2>Look</h2></div>
@@ -112,7 +113,11 @@ export function syncControls(root, state) {
   root.querySelectorAll('[data-mode]').forEach((button) => button.classList.toggle('active', button.dataset.mode === state.mode))
   root.querySelector('#render-mode-label').textContent = state.pipeline === 'legacy'
     ? 'LEGACY STANDARD'
-    : state.pipeline === 'unlit' ? 'UNLIT PALETTE' : 'TOON LIT'
+    : state.pipeline === 'neutral'
+      ? 'NEUTRAL GAME'
+      : state.pipeline === 'twoD'
+        ? '2D-BIASED TOON'
+        : state.pipeline === 'unlit' ? 'PALETTE REFERENCE' : 'TOON LIT'
   root.querySelector('#bloom-controls').classList.toggle('is-disabled', !state.bloom.enabled)
   root.querySelector('#bloom-state').textContent = state.bloom.enabled ? 'Enabled' : 'Off'
   root.querySelector('#bloom-state').classList.toggle('is-enabled', state.bloom.enabled)
@@ -145,6 +150,23 @@ export function updateReferenceImage(root, id) {
   image.src = `https://api.mooncatrescue.com/mooncat/image/${encodeURIComponent(requestId)}.png?costumes=false&acc=&glow=0&scale=3`
 }
 
+export function setPoseOptions(root, poses, selectedPose) {
+  const select = root.querySelector('#pose-select')
+  select.replaceChildren()
+  if (!poses.length) {
+    const option = new Option('No named pose layers', '')
+    option.disabled = true
+    select.add(option)
+    select.disabled = true
+    return selectedPose
+  }
+  poses.forEach((pose) => select.add(new Option(pose.label, pose.name)))
+  select.disabled = false
+  const selected = poses.some((pose) => pose.name === selectedPose) ? selectedPose : poses[0].name
+  select.value = selected
+  return selected
+}
+
 export function bindControls(root, handlers) {
   root.querySelector('#model-form').addEventListener('submit', (event) => {
     event.preventDefault()
@@ -156,6 +178,7 @@ export function bindControls(root, handlers) {
   })
   root.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => handlers.mode(button.dataset.mode)))
   root.querySelector('#preset').addEventListener('change', (event) => handlers.preset(event.target.value))
+  root.querySelector('#pose-select').addEventListener('change', (event) => handlers.pose(event.target.value))
   root.querySelector('#reset').addEventListener('click', handlers.reset)
   root.querySelector('#copy-link').addEventListener('click', handlers.copy)
 }
@@ -165,7 +188,7 @@ export function setLoadStatus(root, message, kind = '') {
   status.textContent = message
   status.className = `helper-text ${kind}`
   const pill = root.querySelector('#model-status')
-  pill.textContent = kind === 'error' ? 'Load error' : kind === 'success' ? 'Model loaded' : message
+  pill.textContent = kind === 'error' ? 'Load error' : message
   pill.className = `status-pill ${kind}`
   root.querySelector('#viewer-message-title').textContent = kind === 'error' ? 'Could not load this model' : message
   root.querySelector('#viewer-message-detail').textContent = kind === 'error' ? message : 'Add a sample VOX file to public/vox, then load its rescue ID.'

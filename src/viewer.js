@@ -81,6 +81,7 @@ export function createViewer(container, setMessage) {
   const gradientMap = gradientTexture({ shadow: 75, midtone: 190, highlight: 255 })
   const toonMaterial = new MeshToonMaterial({ vertexColors: true, gradientMap })
   const legacyMaterial = new MeshStandardMaterial({ vertexColors: true })
+  const neutralMaterial = new MeshStandardMaterial({ vertexColors: true, metalness: 0, roughness: 0.92 })
   const unlitMaterial = new MeshBasicMaterial({ vertexColors: true })
   let currentObject = null
   let currentPipeline = 'mr'
@@ -90,7 +91,9 @@ export function createViewer(container, setMessage) {
     currentPipeline = pipeline
     const material = pipeline === 'legacy'
       ? legacyMaterial
-      : pipeline === 'unlit' ? unlitMaterial : toonMaterial
+      : pipeline === 'neutral'
+        ? neutralMaterial
+        : pipeline === 'unlit' ? unlitMaterial : toonMaterial
     const colorAttribute = pipeline === 'legacy' ? 'colorRaw' : 'colorLinear'
     modelRoot.traverse((child) => {
       if (!child.isMesh) return
@@ -134,12 +137,16 @@ export function createViewer(container, setMessage) {
     currentPipeline = state.pipeline ?? (state.mode === 'unlit' ? 'unlit' : 'mr')
     scene.background = new Color(state.background)
     const legacy = currentPipeline === 'legacy'
+    const neutral = currentPipeline === 'neutral'
+    const twoDBiased = currentPipeline === 'twoD'
     hemisphere.color.setHex(legacy ? 0xcccccc : 0xffffff)
-    hemisphere.groundColor.setHex(legacy ? 0x444444 : 0x111111)
+    hemisphere.groundColor.setHex(legacy ? 0x444444 : neutral ? 0x55585c : twoDBiased ? 0x33363a : 0x111111)
     hemisphere.intensity = state.lights.hemisphere
     key.position.set(1.5, 3, 2.5)
+    key.color.setHex(0xffffff)
     key.intensity = state.lights.key
     fill.position.set(-1.5, -3, -2.5)
+    fill.color.setHex(neutral ? 0xe2e5e8 : 0xffffff)
     fill.intensity = state.lights.fill
     bloomEnabled = state.bloom.enabled
     bloomPass.enabled = true
@@ -165,7 +172,7 @@ export function createViewer(container, setMessage) {
 
     if (currentObject) {
       modelRoot.remove(currentObject)
-      disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, unlitMaterial]))
+      disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, neutralMaterial, unlitMaterial]))
     }
     currentObject = frame
     modelRoot.add(currentObject)
@@ -187,20 +194,25 @@ export function createViewer(container, setMessage) {
 
   return {
     applyState,
-    load: async (loaded) => {
+    load: async (loaded, pose) => {
       setMessage('Building VOX mesh…', 'loading')
-      await setObject(loaded.object, loaded.id)
-      setMessage(`Loaded rescue ${loaded.id}`, 'success')
+      await setObject(loaded.getPose(pose), loaded.id)
+      setMessage(`Loaded from ${loaded.source} · ${pose}`, 'success')
+    },
+    setPose: async (loaded, pose) => {
+      await setObject(loaded.getPose(pose), loaded.id)
+      setMessage(`Loaded from ${loaded.source} · ${pose}`, 'success')
     },
     error: (message) => setMessage(message, 'error'),
     destroy: () => {
       resizeObserver.disconnect()
       window.removeEventListener('resize', resize)
       renderer.setAnimationLoop(null)
-      if (currentObject) disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, unlitMaterial]))
+      if (currentObject) disposeObject(currentObject, new Set([toonMaterial, legacyMaterial, neutralMaterial, unlitMaterial]))
       gradientMap.dispose()
       toonMaterial.dispose()
       legacyMaterial.dispose()
+      neutralMaterial.dispose()
       unlitMaterial.dispose()
       composer.dispose()
       renderer.dispose()

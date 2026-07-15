@@ -3,6 +3,7 @@ export const DEFAULTS = {
   preset: 'issue176',
   pipeline: 'mr',
   mode: 'toon',
+  pose: 'Posture',
   ramp: {
     shadow: 75,
     midtone: 190,
@@ -38,7 +39,7 @@ export const PRESETS = {
     },
   },
   unlit: {
-    label: 'Unlit palette',
+    label: 'Palette reference — unlit',
     state: {
       ...DEFAULTS,
       preset: 'unlit',
@@ -46,24 +47,25 @@ export const PRESETS = {
       mode: 'unlit',
     },
   },
-  highContrast: {
-    label: 'High contrast',
+  neutralGame: {
+    label: 'Neutral game lighting',
     state: {
       ...DEFAULTS,
-      pipeline: 'mr',
-      ramp: { shadow: 24, midtone: 155, highlight: 255 },
-      lights: { hemisphere: 0.35, key: 3.2, fill: 0.1 },
-      background: '#080a0f',
+      preset: 'neutralGame',
+      pipeline: 'neutral',
+      lights: { hemisphere: 1.2, key: 0.95, fill: 0.45 },
+      background: '#24272b',
     },
   },
-  softLighting: {
-    label: 'Soft lighting',
+  twoDBiased: {
+    label: '2D-biased',
     state: {
       ...DEFAULTS,
-      pipeline: 'mr',
-      ramp: { shadow: 92, midtone: 182, highlight: 242 },
-      lights: { hemisphere: 1.35, key: 1.15, fill: 0.8 },
-      background: '#232831',
+      preset: 'twoDBiased',
+      pipeline: 'twoD',
+      ramp: { shadow: 135, midtone: 225, highlight: 255 },
+      lights: { hemisphere: 1.1, key: 0.85, fill: 0.4 },
+      background: '#24272b',
     },
   },
 }
@@ -77,10 +79,11 @@ export function cloneState(state = DEFAULTS) {
   }
 }
 
-export function presetState(name, id = DEFAULTS.id) {
+export function presetState(name, id = DEFAULTS.id, pose = DEFAULTS.pose) {
   const preset = PRESETS[name] ?? PRESETS.issue176
   const state = cloneState(preset.state)
   state.id = id
+  state.pose = pose
   state.preset = name
   return state
 }

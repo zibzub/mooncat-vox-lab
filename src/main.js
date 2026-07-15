@@ -3,13 +3,14 @@ import { cloneState, presetState } from './config.js'
 import { persistState, stateFromUrl, urlForState } from './state.js'
 import { loadVox } from './vox.js'
 import { createViewer } from './viewer.js'
-import { bindControls, renderShell, setLoadStatus, syncControls, updateReferenceImage } from './ui.js'
+import { bindControls, renderShell, setLoadStatus, setPoseOptions, syncControls, updateReferenceImage } from './ui.js'
 
 const root = document.querySelector('#app')
 renderShell(root)
 
 let state = stateFromUrl()
 let viewer
+let loadedAsset = null
 
 function updateState(nextState, { persist = true } = {}) {
   state = nextState
@@ -31,14 +32,21 @@ async function loadSelected(id, { showMissing = true, manual = false } = {}) {
   const cleanedId = String(id).trim().replace(/[^a-zA-Z0-9_-]/g, '')
   state.id = cleanedId || state.id
   if (manual) state.preset = 'custom'
+  loadedAsset = null
+  setPoseOptions(root, [], state.pose)
   persistState(state)
   syncControls(root, state)
   updateReferenceImage(root, state.id)
   setLoadStatus(root, `Loading rescue ${state.id}…`, 'loading')
   try {
     const loaded = await loadVox(state.id)
+    loadedAsset = loaded
+    const selectedPose = setPoseOptions(root, loaded.poses, state.pose || loaded.defaultPose)
+    state.pose = selectedPose || loaded.defaultPose
+    persistState(state)
+    syncControls(root, state)
     viewer.applyState(state)
-    await viewer.load(loaded)
+    await viewer.load(loaded, state.pose)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to load the VOX file.'
     if (showMissing) viewer.error(message)
@@ -69,9 +77,20 @@ bindControls(root, {
     pipeline: mode === 'unlit' ? 'unlit' : 'mr',
     preset: 'custom',
   }),
-  preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id)),
-  reset: () => updateState(presetState('issue176', state.id)),
+  preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id, state.pose)),
+  reset: () => updateState(presetState('issue176', state.id, state.pose)),
   copy: copyShareLink,
+  pose: async (pose) => {
+    if (!loadedAsset) return
+    state.pose = pose
+    persistState(state)
+    syncControls(root, state)
+    try {
+      await viewer.setPose(loadedAsset, state.pose)
+    } catch (error) {
+      setLoadStatus(root, error instanceof Error ? error.message : 'Unable to switch pose.', 'error')
+    }
+  },
   customize: () => {
     if (state.preset !== 'custom') updateState({ ...state, preset: 'custom' }, { persist: false })
   },
