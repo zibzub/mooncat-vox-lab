@@ -366,6 +366,20 @@ input[type="number"],
 .subheading {
   margin-top: 2px;
 }
+.toon-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 15px;
+  color: var(--soft);
+  font-size: 11px;
+}
+.toon-toggle-row .toggle-state {
+  margin-left: auto;
+}
+.toon-toggle-row .switch {
+  flex: 0 0 34px;
+}
 .lighting-presets {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

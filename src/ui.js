@@ -59,6 +59,11 @@ export function renderShell(root) {
             <button type="button" data-mode="unlit" class="mode-button">Unlit palette</button>
           </div>
           <div class="subheading">Toon ramp</div>
+          <label class="toon-toggle-row" for="toon-enabled">
+            <span>Toon shading</span>
+            <span id="toon-state" class="toggle-state">On</span>
+            <span class="switch"><input id="toon-enabled" type="checkbox" checked><span></span></span>
+          </label>
           ${range('ramp.shadow', 'Shadow', 0, 255, 1, 75)}
           ${range('ramp.midtone', 'Midtone', 0, 255, 1, 190)}
           ${range('ramp.highlight', 'Highlight', 0, 255, 1, 255)}
@@ -119,6 +124,10 @@ export function syncControls(root, state) {
   setValue(root, 'bloom.threshold', state.bloom.threshold)
   setValue(root, 'bloom.radius', state.bloom.radius)
   root.querySelectorAll('[data-mode]').forEach((button) => button.classList.toggle('active', button.dataset.mode === state.mode))
+  const toonEnabled = state.pipeline === 'mr' || state.pipeline === 'twoD'
+  root.querySelector('#toon-enabled').checked = toonEnabled
+  root.querySelector('#toon-state').textContent = toonEnabled ? 'On' : 'Off'
+  root.querySelector('#toon-state').classList.toggle('is-enabled', toonEnabled)
   root.querySelector('#render-mode-label').textContent = state.pipeline === 'legacy'
     ? 'LEGACY STANDARD'
     : state.pipeline === 'neutral'
@@ -184,6 +193,7 @@ export function bindControls(root, handlers) {
     input.addEventListener('input', () => handlers.change(input.dataset.setting, input.type === 'checkbox' ? input.checked : input.value))
   })
   root.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => handlers.mode(button.dataset.mode)))
+  root.querySelector('#toon-enabled').addEventListener('change', (event) => handlers.toon(event.target.checked))
   root.querySelector('#preset').addEventListener('change', (event) => handlers.preset(event.target.value))
   root.querySelectorAll('input[name="lighting-preset"]').forEach((input) => {
     input.addEventListener('change', () => {

@@ -88,6 +88,12 @@ bindControls(root, {
     pipeline: mode === 'unlit' ? 'unlit' : 'mr',
     preset: 'custom',
   }),
+  toon: (enabled) => updateState({
+    ...state,
+    mode: 'toon',
+    pipeline: enabled ? 'mr' : 'neutral',
+    preset: 'custom',
+  }),
   preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id, state.pose)),
   lighting: (name) => {
     const preset = LIGHTING_PRESETS[name]
