@@ -45,10 +45,11 @@ export function renderShell(root) {
           <label class="field-label" for="preset">Preset</label>
           <select id="preset" class="select-control">
             ${Object.entries(PRESETS).map(([key, preset]) => `<option value="${key}">${preset.label}</option>`).join('')}
+            <option value="custom">Custom</option>
           </select>
           <div class="mode-switch" role="group" aria-label="Material mode">
             <button type="button" data-mode="toon" class="mode-button active">Toon lit</button>
-            <button type="button" data-mode="unlit" class="mode-button">Unlit</button>
+            <button type="button" data-mode="unlit" class="mode-button">Unlit palette</button>
           </div>
           <div class="subheading">Toon ramp</div>
           ${range('ramp.shadow', 'Shadow', 0, 255, 1, 75)}
@@ -63,7 +64,7 @@ export function renderShell(root) {
           ${range('lights.fill', 'Fill light', 0, 4, 0.05, 0.35)}
         </section>
         <section class="control-section bloom-section">
-          <div class="section-heading"><span class="section-number">04</span><h2>Bloom</h2><label class="switch"><input id="bloom.enabled" data-setting="bloom.enabled" type="checkbox"><span></span></label></div>
+          <div class="section-heading"><span class="section-number">04</span><h2>Bloom</h2><span id="bloom-state" class="toggle-state">Off</span><label class="switch"><input id="bloom.enabled" data-setting="bloom.enabled" type="checkbox"><span></span></label></div>
           <div id="bloom-controls" class="bloom-controls is-disabled">
             ${range('bloom.strength', 'Strength', 0, 3, 0.05, 0.8)}
             ${range('bloom.threshold', 'Threshold', 0, 2, 0.05, 0.8)}
@@ -89,6 +90,7 @@ function setValue(root, id, value) {
 
 export function syncControls(root, state) {
   root.querySelector('#rescue-id').value = state.id
+  root.querySelector('#preset').value = state.preset ?? 'custom'
   setValue(root, 'ramp.shadow', state.ramp.shadow)
   setValue(root, 'ramp.midtone', state.ramp.midtone)
   setValue(root, 'ramp.highlight', state.ramp.highlight)
@@ -103,6 +105,8 @@ export function syncControls(root, state) {
   root.querySelectorAll('[data-mode]').forEach((button) => button.classList.toggle('active', button.dataset.mode === state.mode))
   root.querySelector('#render-mode-label').textContent = state.mode === 'unlit' ? 'UNLIT PALETTE' : 'TOON LIT'
   root.querySelector('#bloom-controls').classList.toggle('is-disabled', !state.bloom.enabled)
+  root.querySelector('#bloom-state').textContent = state.bloom.enabled ? 'Enabled' : 'Off'
+  root.querySelector('#bloom-state').classList.toggle('is-enabled', state.bloom.enabled)
 }
 
 export function bindControls(root, handlers) {
@@ -110,9 +114,9 @@ export function bindControls(root, handlers) {
     event.preventDefault()
     handlers.load(root.querySelector('#rescue-id').value)
   })
+  root.querySelector('#rescue-id').addEventListener('input', handlers.customize)
   root.querySelectorAll('[data-setting]').forEach((input) => {
     input.addEventListener('input', () => handlers.change(input.dataset.setting, input.type === 'checkbox' ? input.checked : input.value))
-    input.addEventListener('change', () => handlers.change(input.dataset.setting, input.type === 'checkbox' ? input.checked : input.value))
   })
   root.querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => handlers.mode(button.dataset.mode)))
   root.querySelector('#preset').addEventListener('change', (event) => handlers.preset(event.target.value))

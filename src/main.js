@@ -23,12 +23,14 @@ function patchSetting(path, rawValue) {
   const [group, key] = path.split('.')
   if (key) next[group][key] = group === 'bloom' && key === 'enabled' ? Boolean(rawValue) : Number(rawValue)
   else next[path] = rawValue
+  next.preset = 'custom'
   updateState(next)
 }
 
-async function loadSelected(id, { showMissing = true } = {}) {
+async function loadSelected(id, { showMissing = true, manual = false } = {}) {
   const cleanedId = String(id).trim().replace(/[^a-zA-Z0-9_-]/g, '')
   state.id = cleanedId || state.id
+  if (manual) state.preset = 'custom'
   persistState(state)
   syncControls(root, state)
   setLoadStatus(root, `Loading rescue ${state.id}…`, 'loading')
@@ -58,12 +60,15 @@ viewer = createViewer(root.querySelector('#viewer'), (message, kind) => setLoadS
 syncControls(root, state)
 viewer.applyState(state)
 bindControls(root, {
-  load: (id) => loadSelected(id),
+  load: (id) => loadSelected(id, { manual: true }),
   change: patchSetting,
-  mode: (mode) => updateState({ ...state, mode }),
-  preset: (name) => updateState(presetState(name, state.id)),
+  mode: (mode) => updateState({ ...state, mode, preset: 'custom' }),
+  preset: (name) => updateState(name === 'custom' ? { ...state, preset: 'custom' } : presetState(name, state.id)),
   reset: () => updateState(presetState('issue176', state.id)),
   copy: copyShareLink,
+  customize: () => {
+    if (state.preset !== 'custom') updateState({ ...state, preset: 'custom' }, { persist: false })
+  },
 })
 
 loadSelected(state.id)

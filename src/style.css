@@ -55,6 +55,8 @@ code { font-family: var(--mono); color: #c8d8ef; font-size: .88em; }
 .control-section { padding: 21px 0; border-bottom: 1px solid var(--line); }
 .section-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 17px; }
 .section-heading h2 { margin: 0; color: #f0f2f6; font-size: 14px; font-weight: 500; letter-spacing: .01em; }
+.toggle-state { margin-left: auto; color: var(--muted); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.toggle-state.is-enabled { color: #8be0b9; }
 .section-number { color: var(--accent); font: 10px var(--mono); }
 .field-label, .model-form > label, .subheading { display: block; margin-bottom: 8px; color: var(--muted); font: 10px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
 .input-row { display: flex; gap: 7px; }

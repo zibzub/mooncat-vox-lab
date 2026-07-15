@@ -1,5 +1,6 @@
 export const DEFAULTS = {
   id: '0',
+  preset: 'issue176',
   mode: 'toon',
   ramp: {
     shadow: 75,
@@ -65,5 +66,18 @@ export function presetState(name, id = DEFAULTS.id) {
   const preset = PRESETS[name] ?? PRESETS.issue176
   const state = cloneState(preset.state)
   state.id = id
+  state.preset = name
   return state
+}
+
+export function matchingPreset(state) {
+  const keys = Object.keys(PRESETS)
+  return keys.find((key) => {
+    const candidate = PRESETS[key].state
+    return state.mode === candidate.mode
+      && state.background === candidate.background
+      && JSON.stringify(state.ramp) === JSON.stringify(candidate.ramp)
+      && JSON.stringify(state.lights) === JSON.stringify(candidate.lights)
+      && JSON.stringify(state.bloom) === JSON.stringify(candidate.bloom)
+  }) ?? 'custom'
 }

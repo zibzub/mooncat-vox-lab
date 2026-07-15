@@ -115,6 +115,22 @@ export function createViewer(container, setMessage) {
     composer.setSize(width, height)
   }
 
+  function frameCamera() {
+    const aspect = Math.max(camera.aspect, 0.1)
+    const verticalHalfFov = (camera.fov * Math.PI) / 360
+    const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * aspect)
+    const radius = (MODEL_SIZE * Math.sqrt(3)) / 2
+    const distance = (radius / Math.min(Math.tan(verticalHalfFov), Math.tan(horizontalHalfFov))) * 1.25
+    const direction = new Vector3(16, 11, 16).normalize()
+    camera.position.copy(direction.multiplyScalar(distance))
+    camera.near = Math.max(distance / 100, 0.01)
+    camera.far = distance * 100
+    camera.updateProjectionMatrix()
+    controls.target.set(0, 0, 0)
+    controls.update()
+    controls.saveState()
+  }
+
   function applyState(state) {
     scene.background = new Color(state.background)
     hemisphere.intensity = state.lights.hemisphere
@@ -131,22 +147,24 @@ export function createViewer(container, setMessage) {
 
   async function setObject(nextObject, id) {
     markVertexColors(nextObject)
-    const bounds = new Box3().setFromObject(nextObject)
+    const frame = new Group()
+    frame.name = `Rescue ${id}`
+    frame.add(nextObject)
+    const bounds = new Box3().setFromObject(frame)
     const center = bounds.getCenter(new Vector3())
     const size = bounds.getSize(new Vector3())
     const largestDimension = Math.max(size.x, size.y, size.z, 1)
-    nextObject.position.sub(center)
-    nextObject.scale.setScalar(MODEL_SIZE / largestDimension)
-    nextObject.name = `Rescue ${id}`
+    const scale = MODEL_SIZE / largestDimension
+    frame.scale.setScalar(scale)
+    frame.position.copy(center).multiplyScalar(-scale)
 
     if (currentObject) {
       modelRoot.remove(currentObject)
       disposeObject(currentObject, new Set([toonMaterial, unlitMaterial]))
     }
-    currentObject = nextObject
+    currentObject = frame
     modelRoot.add(currentObject)
-    controls.reset()
-    controls.target.set(0, 0, 0)
+    frameCamera()
     setMaterials(currentMode)
   }
 

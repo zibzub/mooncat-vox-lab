@@ -1,7 +1,4 @@
-import { Group } from 'three'
-import { VOXLoader, buildMesh } from 'three/addons/loaders/VOXLoader.js'
-
-const POSE_NAMES = new Set(['posture', 'posture2', 'posture3', 'posture4'])
+import { MoonCatVOXLoader, MoonCatVOXMesh } from './vox-loader.js'
 
 export async function loadVox(rescueId) {
   const id = String(rescueId).trim().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -14,37 +11,30 @@ export async function loadVox(rescueId) {
     throw new Error(`No bundled VOX file found for rescue ID ${id}. Expected public/vox/${id}.vox.`)
   }
 
-  const result = new VOXLoader().parse(await response.arrayBuffer())
+  const result = new MoonCatVOXLoader().parse(await response.arrayBuffer())
   if (!result?.chunks?.length) throw new Error(`The VOX file for rescue ID ${id} did not contain a model.`)
-  return { id, object: selectDefaultPose(result) }
+  return { id, object: selectStandingPose(result) }
 }
 
-function selectDefaultPose(result) {
-  if (result.scene) {
-    let defaultPose = null
-    result.scene.traverse((child) => {
-      if (!defaultPose && POSE_NAMES.has(child.name?.toLowerCase())) {
-        defaultPose = child
-      }
-    })
+function selectStandingPose(result) {
+  const layers = result.scene?.child?.children ?? []
+  const targetLayer = layers.find((layer) => layer.name === 'Posture')
+  const fallbackChunk = result.chunks[0]
+  const chunk = targetLayer?.child?.models?.[0]?.chunk ?? fallbackChunk
+  const paletteSource = layers[0]?.child?.models?.[0]?.chunk?.palette
+  if (paletteSource && chunk) chunk.palette = paletteSource
+  if (!chunk?.data) throw new Error('The VOX file did not contain a usable standing Posture layer.')
 
-    if (defaultPose) {
-      const pose = new Group()
-      pose.name = defaultPose.name || 'Posture'
-      pose.add(defaultPose.clone(true))
-      return pose
-    }
-
-    return result.scene
-  }
-
-  return buildMesh(result.chunks[0])
+  const mesh = new MoonCatVOXMesh(chunk)
+  mesh.name = targetLayer?.name ?? 'Posture'
+  if (targetLayer?.frames?.[0]?._r) mesh.scale.x *= -1
+  return mesh
 }
 
 /**
- * Three's VOXLoader converts palette bytes with Color.setRGB(..., SRGBColorSpace)
- * while building the vertex attribute. That is the single sRGB-to-linear
- * conversion used by this viewer; lit and unlit materials share the attribute.
+ * MoonCatVOXMesh converts palette bytes from sRGB to linear while building the
+ * vertex attribute. That is the single conversion used by this viewer; lit and
+ * unlit materials share the attribute.
  */
 export function markVertexColors(object) {
   object.traverse((child) => {

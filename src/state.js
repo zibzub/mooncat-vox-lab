@@ -1,4 +1,4 @@
-import { DEFAULTS, cloneState } from './config.js'
+import { DEFAULTS, cloneState, matchingPreset, PRESETS } from './config.js'
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
@@ -51,12 +51,17 @@ export function stateFromUrl(search = window.location.search) {
   const background = params.get('bg')
   if (background && /^#[0-9a-f]{6}$/i.test(background)) state.background = background
   state.bloom = bloom(params.get('bloom'), state.bloom)
+  const requestedPreset = params.get('preset')
+  state.preset = requestedPreset && (requestedPreset === 'custom' || PRESETS[requestedPreset])
+    ? requestedPreset
+    : matchingPreset(state)
   return state
 }
 
 export function urlForState(state, location = window.location) {
   const params = new URLSearchParams()
   params.set('id', state.id)
+  params.set('preset', state.preset ?? matchingPreset(state))
   params.set('mode', state.mode)
   params.set('ramp', [state.ramp.shadow, state.ramp.midtone, state.ramp.highlight].join(','))
   params.set('lights', [state.lights.hemisphere, state.lights.key, state.lights.fill].join(','))
