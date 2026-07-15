@@ -130,7 +130,9 @@ export function syncControls(root, state) {
   root.querySelector('#toon-state').classList.toggle('is-enabled', toonEnabled)
   root.querySelector('#render-mode-label').textContent = state.pipeline === 'legacy'
     ? 'LEGACY STANDARD'
-    : state.pipeline === 'neutral'
+    : state.pipeline === 'correctedLegacy'
+      ? 'CORRECTED OG STANDARD'
+      : state.pipeline === 'neutral'
       ? 'NEUTRAL GAME'
       : state.pipeline === 'twoD'
         ? '2D-BIASED TOON'

@@ -122,7 +122,7 @@ ${retainedGradientChunk}`,
 
   function setMaterials(pipeline) {
     currentPipeline = pipeline
-    const material = pipeline === 'legacy'
+    const material = pipeline === 'legacy' || pipeline === 'correctedLegacy'
       ? legacyMaterial
       : pipeline === 'neutral'
         ? neutralMaterial
@@ -176,10 +176,12 @@ ${retainedGradientChunk}`,
     currentPipeline = state.pipeline ?? (state.mode === 'unlit' ? 'unlit' : 'mr')
     scene.background = new Color(state.background)
     const legacy = currentPipeline === 'legacy'
+    const correctedLegacy = currentPipeline === 'correctedLegacy'
+    const legacyLighting = legacy || correctedLegacy
     const neutral = currentPipeline === 'neutral'
     const twoDBiased = currentPipeline === 'twoD'
-    hemisphere.color.setHex(legacy ? 0xcccccc : 0xffffff)
-    hemisphere.groundColor.setHex(legacy ? 0x444444 : neutral ? 0x55585c : twoDBiased ? 0x33363a : 0x111111)
+    hemisphere.color.setHex(legacyLighting ? 0xcccccc : 0xffffff)
+    hemisphere.groundColor.setHex(legacyLighting ? 0x444444 : neutral ? 0x55585c : twoDBiased ? 0x33363a : 0x111111)
     hemisphere.intensity = state.lights.hemisphere
     key.position.set(1.5, 3, 2.5)
     key.color.setHex(0xffffff)

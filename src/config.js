@@ -43,6 +43,16 @@ export const PRESETS = {
     label: 'Issue #176 MR',
     state: DEFAULTS,
   },
+  correctedOg: {
+    label: 'Color corrected - OG lighting',
+    state: {
+      ...DEFAULTS,
+      preset: 'correctedOg',
+      pipeline: 'correctedLegacy',
+      lights: { ...LIGHTING_PRESETS.legacy.lights },
+      background: '#111111',
+    },
+  },
   legacy: {
     label: 'ChainStation legacy',
     state: {

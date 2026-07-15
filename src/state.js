@@ -49,7 +49,7 @@ export function stateFromUrl(search = window.location.search) {
   state.pose = /^Posture(?:[2-4])?$/.test(requestedPose) ? requestedPose : DEFAULTS.pose
   state.mode = params.get('mode') === 'unlit' ? 'unlit' : DEFAULTS.mode
   const requestedPipeline = params.get('pipeline')
-  state.pipeline = ['mr', 'legacy', 'neutral', 'twoD', 'unlit'].includes(requestedPipeline)
+  state.pipeline = ['mr', 'legacy', 'correctedLegacy', 'neutral', 'twoD', 'unlit'].includes(requestedPipeline)
     ? requestedPipeline
     : state.mode === 'unlit' ? 'unlit' : DEFAULTS.pipeline
   state.ramp = ramp(params.get('ramp'), state.ramp)
